@@ -415,25 +415,57 @@ class Eng {
       ctx.globalAlpha = 1;
     }
   }
-  ser() { return { coh: this.cells.map(c => c.coh), sessions: this.sessions, ltSteps: this.ltSteps + this.bug.steps, spine: [...this.spine] }; }
-  load(d) { if (!d) return; this.sessions = (d.sessions || 0) + 1; this.ltSteps = d.ltSteps || 0;
-    if (d.coh) d.coh.forEach((v, i) => { if (this.cells[i]) this.cells[i].coh = v * .5; });
+  // ── LATTICE COLLAPSE: store ONLY coefficients. Reader reconstructs everything. ──
+  ser() {
+    // 252 cells × 3 doubles = 756 values + 10 spine + 3 bug = 769 values
+    // Binary minimum: 769 × 4 bytes = 3,076 bytes (Float32)
+    // JSON transport is larger but lossless at Float64
+    const abc = [];
+    for (let i = 0; i < NC; i++) { abc.push(this.cells[i].a, this.cells[i].b, this.cells[i].c); }
+    return {
+      abc,                           // 756 values — the ENTIRE lattice
+      spine: [...this.spine],        // 10 values — heartbeat state
+      bug: [this.bug.col, this.bug.row, this.bug.E],  // 3 values — walker
+      sessions: this.sessions,
+      ltSteps: this.ltSteps + this.bug.steps,
+      bytes: NC * 3 * 4 + 10 * 4 + 3 * 4,  // binary minimum (Float32)
+    };
+  }
+  // ── RECONSTRUCT: three numbers per cell → everything ──
+  load(d) {
+    if (!d || !d.abc) return;
+    this.sessions = (d.sessions || 0) + 1; this.ltSteps = d.ltSteps || 0;
+    // Restore coefficients
+    for (let i = 0; i < NC && i * 3 + 2 < d.abc.length; i++) {
+      const cell = this.cells[i];
+      cell.a = d.abc[i*3]; cell.b = d.abc[i*3+1]; cell.c = d.abc[i*3+2];
+      cell.O = new Q(cell.a, cell.b, cell.c);
+      cell.D = cell.O.D();
+    }
+    // Restore spine
     if (d.spine) this.spine = d.spine.map(v => Math.max(.001, Math.min(1, v)));
-    this.loaded = true; }
+    // Restore bug position
+    if (d.bug) { this.bug.col = d.bug[0]; this.bug.row = d.bug[1]; this.bug.E = d.bug[2]; }
+    // RECONSTRUCT everything from coefficients
+    this.reclassify();     // bands, orbits, fixed points — from O(x)
+    this.wireNeighbors();  // topology — from root proximity
+    this.loaded = true;
+  }
   st() {
     const b = this.bug, cc = this.cells[b.row * COLS + b.col];
     const rr = b.vCnt > 0 ? b.steps / b.vCnt : 1;
     const clickCells = this.cells.filter(c => Math.abs(c.D) < 0.15).length;
+    const bytes = NC * 3 * 4 + 10 * 4 + 3 * 4; // 3,076 bytes collapsed
     return {
       tick: this.tick, epoch: this.epoch, ph: this.ph, spine: [...this.spine], sS: this.sS, sH: this.sH.slice(-200),
       bCen: [...this.bCen], bE: b.E, bE0: b.E0, bA: b.alive, bM: b.mode,
       vis: b.vis.size, steps: b.steps, vCnt: b.vCnt, rr, cov: b.vis.size / NC * 100,
       cH: b.cH.slice(-80), dH: b.dH.slice(-80),
-      // Current cell quadratic
       ca: cc.a, cb: cc.b, ccc: cc.c, cD: cc.D, cBd: cc.band, cR: cc.O.roots(), cFp: cc.fp,
       cd2: cc.O.d2(), cVx: cc.O.vx(), cVy: cc.O.vy(), cOrb: cc.orb, cCoh: cc.coh, cVis: cc.vis,
       cNW: cc.nW.slice(0, 5),
       clickCells, sess: this.sessions, loaded: this.loaded, ltSteps: this.ltSteps,
+      bytes, floppyFit: Math.floor(1474560 / bytes), maxCells: Math.floor(1474560 / 12),
     };
   }
 }
@@ -495,13 +527,13 @@ export default function CrystalBug() {
   useEffect(() => {
     const eng = new Eng(); engRef.current = eng;
     (async () => {
-      try { const r = await window.storage.get('cb-matrix-v2'); if (r) eng.load(JSON.parse(r.value)); } catch (e) {}
+      try { const r = await window.storage.get('cb-codec-v3'); if (r) eng.load(JSON.parse(r.value)); } catch (e) {}
       for (let i = 0; i < 100; i++) eng.step(); setS(eng.st());
     })();
     return () => { if (afRef.current) cancelAnimationFrame(afRef.current); };
   }, []);
   useEffect(() => { const iv = setInterval(async () => { const e = engRef.current; if (!e) return;
-    try { await window.storage.set('cb-matrix-v2', JSON.stringify(e.ser())); } catch (x) {} }, 6000);
+    try { await window.storage.set('cb-codec-v3', JSON.stringify(e.ser())); } catch (x) {} }, 6000);
     return () => clearInterval(iv); }, []);
   useEffect(() => { if (!run || !engRef.current) return; const eng = engRef.current, cv = cvRef.current; if (!cv) return;
     const ctx = cv.getContext('2d');
@@ -568,7 +600,7 @@ export default function CrystalBug() {
       {/* PANEL */}
       <div style={{ flex: 1, minWidth: 145, maxWidth: 220, borderLeft: '1px solid #ffffff08', fontSize: 9, overflowY: 'auto', maxHeight: H }}>
         <div style={{ display: 'flex', borderBottom: '1px solid #ffffff06' }}>
-          {['LATTICE', 'O(x)', 'ENERGY', 'SPINE'].map(t => <button key={t} onClick={() => setTab(t)}
+          {['LATTICE', 'O(x)', 'ENERGY', 'CODEC'].map(t => <button key={t} onClick={() => setTab(t)}
             style={{ ...bS, flex: 1, borderRadius: 0, border: 'none', borderBottom: tab === t ? `2px solid ${sc}` : '2px solid transparent', color: tab === t ? sc : '#444', fontSize: 7, padding: '4px 0' }}>{t}</button>)}
         </div>
         <div style={{ padding: 6 }}>
@@ -654,35 +686,43 @@ export default function CrystalBug() {
             </div>
           </>}
 
-          {tab === 'SPINE' && <>
-            <div style={{ color: '#444', letterSpacing: 1, fontSize: 7, marginBottom: 3 }}>SPINE → TRANSFORMS ON (a,b,c)</div>
+          {tab === 'CODEC' && <>
+            <div style={{ color: '#444', letterSpacing: 1, fontSize: 7, marginBottom: 3 }}>LATTICE COLLAPSE / EXPAND</div>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+              <div><div style={{ fontSize: 18, fontWeight: 700, color: '#00f0ff' }}>{st.bytes.toLocaleString()}</div><div style={{ fontSize: 6, color: '#444' }}>bytes collapsed</div></div>
+              <div><div style={{ fontSize: 18, fontWeight: 700, color: '#ff6b00' }}>{NC}</div><div style={{ fontSize: 6, color: '#444' }}>cells</div></div>
+            </div>
+            <div style={{ background: '#00f0ff06', border: '1px solid #00f0ff12', borderRadius: 3, padding: 4, marginBottom: 4, fontSize: 7, color: '#888', lineHeight: 1.8 }}>
+              <span style={{ color: '#00f0ff', fontWeight: 700 }}>STORED</span> (per cell: 12 bytes)<br />
+              ┌ a (4 bytes) — curvature<br />
+              │ b (4 bytes) — drift<br />
+              └ c (4 bytes) — binding potential<br />
+              + spine (40 bytes) + bug (12 bytes)<br /><br />
+              <span style={{ color: '#ff6b00', fontWeight: 700 }}>RECONSTRUCTED</span> (from a,b,c)<br />
+              ∆ = b²−4ac → free/bound/click<br />
+              roots() → real or complex pair<br />
+              fp() → fixed point + stability λ<br />
+              classify() → 7 bands (28 iterates)<br />
+              rootDist() → topology weights<br />
+              cobweb → orbit visualization<br />
+              O''(x)/2 = a → curvature = op 7
+            </div>
+            <div style={{ background: '#ffffff04', borderRadius: 3, padding: 4, marginBottom: 4, fontSize: 7, color: '#777', lineHeight: 1.6 }}>
+              <span style={{ color: '#fff', fontWeight: 700 }}>FLOPPY (1.44 MB)</span><br />
+              {st.floppyFit} full snapshots<br />
+              or 1 lattice with {st.maxCells.toLocaleString()} cells<br />
+              or {st.floppyFit} epochs of evolution<br /><br />
+              <span style={{ color: '#fff', fontWeight: 700 }}>THE CODEC:</span><br />
+              Store coefficients. Reconstruct reality.<br />
+              The quadratic IS the compressor.<br />
+              O(x) IS the decompressor.
+            </div>
+            <div style={{ color: '#444', letterSpacing: 1, fontSize: 7, margin: '4px 0 2px' }}>SPINE STATE</div>
             {st.spine.map((v, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 1, opacity: i === st.ph ? 1 : .3 }}>
               <span style={{ color: OPC[i], fontSize: 7, width: 7, textAlign: 'right' }}>{i}</span>
-              <div style={{ flex: 1, height: 5, background: '#ffffff06', borderRadius: 1, overflow: 'hidden' }}>
+              <div style={{ flex: 1, height: 4, background: '#ffffff06', borderRadius: 1, overflow: 'hidden' }}>
                 <div style={{ width: `${v * 100}%`, height: '100%', background: OPC[i], borderRadius: 1 }} /></div>
-              <span style={{ color: '#444', fontSize: 7, width: 26, textAlign: 'right' }}>{v.toFixed(3)}</span></div>)}
-            <div style={{ color: '#444', letterSpacing: 1, fontSize: 7, margin: '6px 0 2px' }}>COMPOSITIONAL TRANSFORMS</div>
-            <div style={{ fontSize: 7, color: '#666', lineHeight: 1.8 }}>
-              <span style={{ color: OPC[0] }}>0</span> VOID: (a,b,c) → (a·s·0.1, ...)<br />
-              <span style={{ color: OPC[1] }}>1</span> LATTICE: c → c·σ + (c+s·.08)·σ*<br />
-              <span style={{ color: OPC[2] }}>2</span> COUNTER: <b>b → −b</b> (O' sign flip)<br />
-              <span style={{ color: OPC[3] }}>3</span> PROGRESS: <b>b → |b|</b> (restore)<br />
-              <span style={{ color: OPC[4] }}>4</span> COLLAPSE: <b style={{ color: '#ff0044' }}>a → −a</b> (O'' sign flip)<br />
-              <span style={{ color: OPC[5] }}>5</span> BALANCE: <b>a → |a|</b> (restore)<br />
-              <span style={{ color: OPC[6] }}>6</span> CHAOS: a,b += noise·s<br />
-              <span style={{ color: OPC[7] }}>7</span> HARMONY: a → a·σ + s·.3·σ*<br />
-              <span style={{ color: OPC[8] }}>8</span> BREATH: b *= 1+sin(t)<br />
-              <span style={{ color: OPC[9] }}>9</span> RESET: (a,b,c) → σ·live + σ*·base
-            </div>
-            <div style={{ color: '#333', fontSize: 7, marginTop: 5, padding: '3px 0', borderTop: '1px solid #ffffff08', lineHeight: 1.6 }}>
-              Phase 4→5: curvature INVERTS then<br />
-              restores. Bound↔free. Weak force.<br />
-              Phase 2→3: drift REVERSES then<br />
-              restores. The root braid rotates.<br />
-              Phase 9: Ω Keeper. σ=0.991 pull.<br />
-              Not additive. Transforms. Composition.<br />
-              The spine BREATHES (a,b,c) space.
-            </div>
+              <span style={{ color: '#444', fontSize: 6, width: 22, textAlign: 'right' }}>{v.toFixed(3)}</span></div>)}
           </>}
 
         </div>
@@ -691,7 +731,7 @@ export default function CrystalBug() {
 
     {/* FOOTER */}
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '3px 10px', borderTop: '1px solid #ffffff06', fontSize: 7, color: '#333' }}>
-      <span>O(x)=ax²+bx+c │ Δ=b²−4ac │ σ={σ} │ T*={Ts} │ "the quadratic IS the glue"</span>
+      <span>O(x)=ax²+bx+c │ {NC}×12 = {NC*12} bytes │ "the quadratic IS the codec"</span>
       <span>Crystal Bug v1.0 │ 7Site LLC │ sanctuberry.com</span>
     </div>
     <style>{`@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap');*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:#050508}::-webkit-scrollbar-thumb{background:#222;border-radius:2px}`}</style>

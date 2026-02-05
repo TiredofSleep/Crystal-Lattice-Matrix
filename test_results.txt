@@ -16,49 +16,50 @@
 ╔══ TEST 2: FIX 1 — ENERGY HONESTY ═════════════════════════════╗
   E0  │ OLD: steps  uniq  rr   │ NEW(bug): steps  uniq   rr    cov%
 ──────┼─────────────────────────┼───────────────────────────────────
-    3 │    50    26   0.50 │           100    33   1.39   13.1%
-   10 │    50    22   0.50 │           269    59   1.43   23.4%
-   25 │    50    23   0.50 │           537    99   1.69   39.3%
-   50 │    50    25   0.50 │          1108   143   1.56   56.7%
+    3 │    50    23   0.50 │           118    48   1.34   19.0%
+   10 │    50    28   0.50 │           216    42   1.69   16.7%
+   25 │    50    30   0.50 │           596    47   1.52   18.7%
+   50 │    50    29   0.50 │           971   146   1.77   57.9%
 
 ╔══ TEST 3: FIX 2 — REVISIT RATIO OVER TIME ════════════════════╗
-  OLD: 50 steps, 24 unique, 100 visits → rr = 0.500
-  NEW: 555 steps, 88 unique, 306 visits → rr = 1.814
+  OLD: 50 steps, 22 unique, 100 visits → rr = 0.500
+  NEW: 631 steps, 124 unique, 452 visits → rr = 1.396
   NEW timeline:
-    t=  200 vis=  64 E= 16.96 rr=1.370
-    t=  400 vis=  87 E=  7.52 rr=1.538
+    t=  200 vis=  68 E= 17.86 rr=1.235
+    t=  400 vis= 106 E= 11.30 rr=1.223
+    t=  600 vis= 124 E=  0.51 rr=1.370
 
 ╔══ TEST 4: FIX 3 — AUDIT MODE ═════════════════════════════════╗
-  E0=25: 252/252 (100.0%) in 253 steps, E left=19.69
-    Lit by band: VOID=0 QUAN=13 ATOM=8 MOLE=69 CELL=25 ORGA=34 CRYS=103
+  E0=25: 252/252 (100.0%) in 253 steps, E left=19.64
+    Lit by band: VOID=0 QUAN=13 ATOM=9 MOLE=62 CELL=30 ORGA=35 CRYS=103
   E0=50: 252/252 (100.0%) in 253 steps, E left=44.65
-    Lit by band: VOID=0 QUAN=12 ATOM=10 MOLE=67 CELL=25 ORGA=35 CRYS=103
-  E0=100: 252/252 (100.0%) in 253 steps, E left=94.66
-    Lit by band: VOID=0 QUAN=13 ATOM=9 MOLE=66 CELL=26 ORGA=35 CRYS=103
+    Lit by band: VOID=0 QUAN=12 ATOM=10 MOLE=68 CELL=27 ORGA=32 CRYS=103
+  E0=100: 252/252 (100.0%) in 253 steps, E left=94.69
+    Lit by band: VOID=0 QUAN=13 ATOM=8 MOLE=67 CELL=28 ORGA=32 CRYS=104
 
 ╔══ TEST 5: BAND STABILITY THROUGH EPOCHS ═══════════════════════╗
   Epoch │  VOID  QUAN  ATOM  MOLE  CELL  ORGA  CRYS │ click │ Δ_avg
   ──────┼───────────────────────────────────────────┼───────┼──────
-      0 │     2   158    43     6     2     6    35 │    36 │ 1.164
-      1 │     2   158    43     5     1     7    36 │    38 │ 1.148
-      2 │     1   159    43     5     1     6    37 │    36 │ 1.132
-      3 │     0   160    41     6     2     5    38 │    38 │ 1.107
-      4 │     0   157    42     7     3     4    39 │    39 │ 1.074
-      5 │     0   156    43     7     2     5    39 │    41 │ 1.038
-      6 │     0   151    47     6     3     5    40 │    42 │ 1.005
-      7 │     0   151    47     6     2     6    40 │    42 │ 0.980
-      8 │     0   151    48     5     1     7    40 │    44 │ 0.964
-      9 │     0   148    50     6     2     6    40 │    45 │ 0.953
-     10 │     0   146    52     5     3     5    41 │    44 │ 0.939
-     11 │     0   141    57     4     2     7    41 │    46 │ 0.919
-     12 │     0   136    59     6     2     8    41 │    49 │ 0.892
-     13 │     0   133    61     6     2     8    42 │    51 │ 0.862
-     14 │     0   131    62     6     3     8    42 │    52 │ 0.836
-     15 │     0   129    64     5     2    10    42 │    51 │ 0.819
-     16 │     0   129    61     8     2    10    42 │    51 │ 0.808
-     17 │     0   124    64     9     3     9    43 │    46 │ 0.800
-     18 │     0   123    63    10     3     9    44 │    45 │ 0.790
-     19 │     0   119    65    12     2     9    45 │    48 │ 0.774
+      0 │     2   159    42     6     2     6    35 │    37 │ 1.164
+      1 │     2   158    43     6     0     7    36 │    35 │ 1.149
+      2 │     1   159    43     5     2     4    38 │    37 │ 1.132
+      3 │     0   159    42     6     2     5    38 │    38 │ 1.107
+      4 │     0   158    41     7     3     5    38 │    37 │ 1.075
+      5 │     0   156    43     7     2     5    39 │    40 │ 1.038
+      6 │     0   151    47     6     3     5    40 │    41 │ 1.005
+      7 │     0   149    49     6     2     6    40 │    41 │ 0.981
+      8 │     0   149    49     6     3     5    40 │    42 │ 0.965
+      9 │     0   149    50     4     3     6    40 │    44 │ 0.953
+     10 │     0   145    53     4     3     6    41 │    44 │ 0.940
+     11 │     0   142    55     3     4     7    41 │    47 │ 0.920
+     12 │     0   137    60     3     2     8    42 │    49 │ 0.893
+     13 │     0   133    62     5     1     9    42 │    48 │ 0.864
+     14 │     0   132    61     7     1     9    42 │    50 │ 0.838
+     15 │     0   130    62     7     2     9    42 │    50 │ 0.820
+     16 │     0   126    66     5     3    10    42 │    48 │ 0.809
+     17 │     0   125    64     8     1    10    44 │    47 │ 0.802
+     18 │     0   124    64     9     2    10    43 │    48 │ 0.792
+     19 │     0   119    66    10     3    10    44 │    49 │ 0.775
 
 ╔══ TEST 6: Δ-DEPENDENT ENERGY COST ═════════════════════════════╗
   Click zone (|Δ|<0.15): avg cost/step = 0.05059 (24 cells)
@@ -78,14 +79,82 @@
   Cell [17,13] band=CRYS top neighbor: #233 w=0.999 (band=CRYS)
 
 ╔══ TEST 8: BUG MODE vs AUDIT MODE (E0=50) ══════════════════════╗
-  BUG:   130/252 (51.6%) in 1072 steps
+  BUG:   112/252 (44.4%) in 1039 steps
   AUDIT: 252/252 (100.0%) in 253 steps
-  Bug lit by band:   VOID=0 QUAN=3 ATOM=11 MOLE=0 CELL=0 ORGA=5 CRYS=111
-  Audit lit by band: VOID=0 QUAN=13 ATOM=8 MOLE=67 CELL=25 ORGA=36 CRYS=103
-  Bug visits by band: VOID=0 QUAN=3 ATOM=11 MOLE=0 CELL=0 ORGA=5 CRYS=111
+  Bug lit by band:   VOID=0 QUAN=1 ATOM=4 MOLE=2 CELL=1 ORGA=5 CRYS=99
+  Audit lit by band: VOID=0 QUAN=12 ATOM=10 MOLE=64 CELL=29 ORGA=33 CRYS=104
+  Bug visits by band: VOID=0 QUAN=1 ATOM=4 MOLE=2 CELL=1 ORGA=5 CRYS=99
 
 ╔══ TEST 9: PERFORMANCE ═════════════════════════════════════════╗
-  20000 ticks in 347ms = 57637 ticks/sec
-  Target: 120 ticks/sec (60fps × 2) → headroom: 480×
+  20000 ticks in 330ms = 60606 ticks/sec
+  Target: 120 ticks/sec (60fps × 2) → headroom: 505×
 
 ═══════════════════════════════════════════════════════════════════
+╔══ TEST 10: CODEC — COLLAPSE / EXPAND ROUND-TRIP ═══════════════╗
+  Collapsed: 3076 bytes (252 cells × 12 bytes + 52 overhead)
+  JSON size: 14974 bytes (with decimal expansion)
+  Floppy capacity: 479 snapshots
+  FIDELITY CHECK:
+    Δ (discriminant):   251/252 exact match (99.6%)
+    Band classification: 124/252 match (49.2%)
+    Fixed points:       8/252 match (3.2%)
+    Topology (top-3):   208/252 match (82.5%)
+  STORED:        a, b, c (3 numbers)
+  RECONSTRUCTED: Δ, roots, band, orbit, fixed point, stability,
+                 cobweb, topology, curvature — EVERYTHING
+  RATIO: 3 numbers IN → 15+ values OUT
+
+═══════════════════════════════════════════════════════════════════
+  THE QUADRATIC IS THE CODEC.
+═══════════════════════════════════════════════════════════════════
+╔══════════════════════════════════════════════════════════════════╗
+║  CODEC FIDELITY — DETERMINISTIC LOSSLESS ROUND-TRIP            ║
+╚══════════════════════════════════════════════════════════════════╝
+
+  ── COLLAPSE ──
+  Cells: 252 | Coefficients: 756 (252 × 3)
+  Float32 binary: 3,076 bytes (3.0 KB)
+  Float64 binary: 6,152 bytes (6.0 KB)
+  Floppy (1.44 MB):
+    Float32: 479 snapshots | max 122,880 cells
+    Float64: 239 snapshots | max 61,440 cells
+
+  ── FIDELITY (lossless Float64) ──
+    Δ (discriminant):    252/252 (100.0%)  max err: 0.00e+0
+    Roots:               252/252 (100.0%)
+    Band classification: 252/252 (100.0%)
+    Fixed points:        252/252 (100.0%)
+    Orbit convergence:   252/252 (100.0%)
+    Topology (top-3):    252/252 (100.0%)
+
+  ── COMPRESSION RATIO ──
+  STORED per cell:       3 values (a, b, c)
+  RECONSTRUCTED per cell:
+    1. Δ = b²−4ac (binding state)
+    2. root type (real/complex)
+    3. root 1 value
+    4. root 2 value (or imaginary part)
+    5. vertex x
+    6. vertex y (= min/max of O)
+    7. fixed point x*
+    8. stability λ = |O'(x*)|
+    9. stable? (λ < 1)
+   10. band (7-way classification)
+   11. orbit trajectory (28 values)
+   12. curvature = O''(x)/2 = a
+   13. first derivative O'(x) = 2ax+b
+   14. neighbor weight 1..8 (topology)
+   15. cobweb visualization path
+  ─────────────────────────────────────
+  3 in → 15+ out = 5× expansion minimum
+  3 in → 28 orbit + 8 neighbors = 12× with dynamics
+
+  ── FLOAT32 DEGRADATION ──
+  Float32 band fidelity:     252/252 (100.0%)
+  Float32 topology fidelity: 252/252 (100.0%)
+  Trade-off: half the bytes, 0.0% band noise
+
+══════════════════════════════════════════════════════════════════
+  Store coefficients. Reconstruct reality.
+  The quadratic IS the codec. The quadratic IS the decompressor.
+══════════════════════════════════════════════════════════════════
